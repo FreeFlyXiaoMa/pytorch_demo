@@ -21,11 +21,12 @@ class Net(nn.Module):
 
     def forward(self, x):
         x=F.max_pool2d(F.relu(self.conv1(x)),(2,2))
-        x=F.max_pool2d(F.relu(self.conv2(x)),(2,2))
+        x=F.max_pool2d(F.relu(self.conv2(x)),2)
         x=x.view(-1,self.num_flat_features(x))
         x=F.relu(self.fc1(x))
         x=F.relu(self.fc2(x))
         x=self.fc3(x)
+        return x
 
     def num_flat_features(self,x):
         size=x.size()[1:]
@@ -43,8 +44,31 @@ net=Net()
 
 input=Variable(torch.randn(1,1,32,32),requires_grad=True)
 out=net(input)
-print(out)
-net.zero_grad()
-out.backward(torch.randn(1,10))
+# print(out)
+net.zero_grad() #参数的梯度区置零
+out.backward(torch.randn(1,10)) #随机梯度反向传播
 
-# print()
+target=Variable(torch.randn(1,10))
+
+criterion=nn.MSELoss()
+# loss=criterion(out,target)
+
+# net.zero_grad()
+# print('conv1.bias.grad before backward')
+# print(net.conv1.bias.grad)
+# loss.backward()
+# print('conv1.bias.grad after backward')
+# print(net.conv1.bias.grad)
+
+import torch.optim as optim
+optimizer=optim.SGD(net.parameters(),lr=0.01)
+optimizer.zero_grad()
+output=net(input)
+loss=criterion(output,target)
+loss.backward()
+optimizer.step()
+
+
+
+
+
